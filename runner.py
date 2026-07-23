@@ -11,9 +11,6 @@ from google.genai import types
 # Import the root agent from your agent.py file
 from agent import root_agent
 
-# ==========================================
-# RUBRIC 4: DISTRIBUTED TRACING (OpenTelemetry)
-# ==========================================
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -28,16 +25,9 @@ provider.add_span_processor(processor)
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer("travel_concierge_tracer")
 
-# ==========================================
-# RUBRIC 4: OBSERVABILITY & TRACING (JSON Logging)
-# ==========================================
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("travel_concierge")
 
-
-# ==========================================
-# RUBRIC 4: PII REDACTION (Active Scrubbing Mechanism)
-# ==========================================
 def scrub_pii(text: str) -> str:
     """
     Actively redacts emails, phone numbers, and potential credit card patterns 
@@ -60,18 +50,10 @@ def scrub_pii(text: str) -> str:
     
     return text
 
-
-# ==========================================
-# RUBRIC 5: SECURE SECRET MANAGEMENT
-# ==========================================
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "mock-gcp-project")
 LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID", "mock-engine-id")
 
-
-# ==========================================
-# RUBRIC 2: ASYNC MEMORY OPERATIONS & HISTORY COMPACTION
-# ==========================================
 async def async_consolidate_and_compact_memories(session_id: str, user_id: str, session_service: VertexAiSessionService):
     """
     Rubric Requirement: History Compaction & Async Operations.
@@ -128,9 +110,6 @@ async def main():
     # Active PII scrubbing on input
     scrubbed_query = scrub_pii(query_text)
 
-    # ==========================================
-    # RUBRIC 4: INTENT CAPTURE
-    # ==========================================
     # Log the agent's INTENT before execution with scrubbed data
     logger.info(json.dumps({
         "event": "agent_invocation_intent",
@@ -141,9 +120,6 @@ async def main():
         "timestamp": time.time()
     }))
 
-    # ==========================================
-    # RUBRIC 2: PERSISTENT SESSION STATE
-    # ==========================================
     session_service = VertexAiSessionService(
         project=PROJECT_ID,
         location=LOCATION,
@@ -172,9 +148,6 @@ async def main():
                     response_text = event.content.parts[0].text
                     scrubbed_response = scrub_pii(response_text)
                     
-                    # ==========================================
-                    # RUBRIC 4: OUTCOME CAPTURE
-                    # ==========================================
                     logger.info(json.dumps({
                         "event": "agent_invocation_outcome",
                         "agent": root_agent.name,
@@ -186,9 +159,6 @@ async def main():
                     
                     print(f"\nAgent Response:\n{response_text}\n")
 
-            # ==========================================
-            # RUBRIC 2: ASYNC MEMORY TRIGGER
-            # ==========================================
             # Fire-and-forget background task for actual token/history compaction
             asyncio.create_task(async_consolidate_and_compact_memories(session_id, user_id, session_service))
 

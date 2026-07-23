@@ -6,6 +6,7 @@ import time
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.genai import types
+import re
 
 # Import the root agent from your agent.py file
 from agent import root_agent

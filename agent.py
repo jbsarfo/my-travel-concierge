@@ -2,6 +2,8 @@ import os
 from google import adk
 from pydantic import BaseModel, Field
 from typing import List
+from google.adk.models.llm_request import LlmRequest
+from google.adk.agents.callback_context import CallbackContext
 
 # ==========================================
 # RUBRIC 1: TOOL & INTERFACE DESIGN
@@ -50,6 +52,18 @@ def secure_book_hotel(hotel_name: str, tool_context: adk.ToolContext) -> dict:
         }
     return {"status": "success", "booking_id": "BK-99812"}
 
+def budget_guardrail_plugin(callback_context: CallbackContext, llm_request: LlmRequest):
+    """
+    Rubric Requirement: Guardrails & Policy Plugins.
+    Intercepts the request before it goes to the model to enforce policies.
+    """
+    # Simple policy: Check if user is trying to bypass budget
+    user_message = llm_request.contents[-1].parts[0].text
+    if "override budget" in user_message.lower():
+        logger.warning("Policy Violation: Budget override attempt detected.")
+        # We can raise an error or modify the request here
+        raise ValueError("Policy Error: Budget overrides are not permitted.")
+
 
 # ==========================================
 # RUBRIC 3: ORCHESTRATION & STRATEGIC ROUTING
@@ -74,3 +88,5 @@ root_agent = adk.Agent(
     """,
     children=[hotel_agent]
 )
+
+root_agent.before_model_callback = budget_guardrail_plugin
